@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>โปรแกรมคัดลอกไฟล์สไตล์ macOS</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+        }
+        
+        body {
+            background-color: #f5f5f7;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .mac-window {
+            width: 800px;
+            background-color: rgba(255, 255, 255, 0.95);
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        
+        .window-header {
+            background: linear-gradient(to bottom, #f9f9f9, #e5e5e5);
+            padding: 12px 15px;
+            border-bottom: 1px solid #ddd;
+            display: flex;
+            align-items: center;
+            position: relative;
+        }
+        
+        .window-buttons {
+            display: flex;
+            gap: 8px;
+            position: absolute;
+            left: 15px;
+        }
+        
+        .window-button {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+        
+        .close {
+            background-color: #ff5f57;
+            border: 1px solid #e33e32;
+        }
+        
+        .minimize {
+            background-color: #ffbd2e;
+            border: 1px solid #e09e1d;
+        }
+        
+        .maximize {
+            background-color: #28c940;
+            border: 1px solid #17a52c;
+        }
+        
+        .window-title {
+            width: 100%;
+            text-align: center;
+            font-size: 14px;
+            color: #333;
+            font-weight: 600;
+        }
+        
+        .window-content {
+            padding: 30px;
+        }
+        
+        .app-title {
+            color: #333;
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        .form-group {
+            margin-bottom: 25px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+            font-size: 14px;
+        }
+        
+        .input-field {
+            width: 100%;
+            padding: 12px;
+            border-radius: 6px;
+            border: 1px solid #ddd;
+            background-color: #fff;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
+            font-size: 14px;
+            color: #333;
+            transition: all 0.3s ease;
+        }
+        
+        .input-field:focus {
+            outline: none;
+            border-color: #0071e3;
+            box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.3);
+        }
+        
+        .input-with-button {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .input-with-button .input-field {
+            flex: 1;
+        }
+        
+        .browse-button, .copy-button {
+            background: linear-gradient(to bottom, #0071e3, #0058b0);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 14px;
+            white-space: nowrap;
+            transition: all 0.3s ease;
+        }
+        
+        .browse-button:hover, .copy-button:hover {
+            background: linear-gradient(to bottom, #0262c5, #004b97);
+        }
+        
+        .browse-button:active, .copy-button:active {
+            transform: scale(0.98);
+        }
+        
+        .file-list {
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            max-height: 200px;
+            overflow-y: auto;
+            margin-top: 10px;
+            background-color: #fff;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+        
+        .file-item {
+            padding: 10px 15px;
+            border-bottom: 1px solid #eee;
+            font-size: 14px;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .file-item:last-child {
+            border-bottom: none;
+        }
+        
+        .file-icon {
+            color: #0071e3;
+            font-size: 16px;
+            width: 20px;
+            display: inline-block;
+            text-align: center;
+        }
+        
+        .folder-icon {
+            color: #ffbd2e;
+        }
+        
+        .status-bar {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-radius: 6px;
+            border: 1px solid #ddd;
+            color: #333;
+            font-size: 14px;
+            display: none;
+        }
+        
+        .progress-bar {
+            height: 6px;
+            background-color: #eee;
+            border-radius: 3px;
+            margin-top: 10px;
+            margin-bottom: 10px;
+            overflow: hidden;
+        }
+        
+        .progress {
+            height: 100%;
+            background: linear-gradient(to right, #0071e3, #00c2ff);
+            width: 0;
+            transition: width 0.3s ease;
+        }
+        
+        .destination-link {
+            display: none;
+            margin-top: 10px;
+            padding: 8px 12px;
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 13px;
+            word-break: break-all;
+        }
+        
+        .destination-link a {
+            color: #0071e3;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+        }
+        
+        .destination-link a:hover {
+            text-decoration: underline;
+        }
+        
+        .destination-link-icon {
+            margin-right: 5px;
+        }
+        
+        .action-buttons {
+            margin-top: 30px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: center;
+        }
+        
+        .copy-button {
+            padding: 12px 30px;
+            font-size: 15px;
+            background: linear-gradient(to bottom, #0071e3, #0058b0);
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        /* เพิ่มเอฟเฟคเมื่อคัดลอกเสร็จสมบูรณ์ */
+        .success {
+            background: linear-gradient(to bottom, #28c940, #17a52c) !important;
+        }
+        
+        @keyframes fadeIn {
+            0% { opacity: 0; }
+            100% { opacity: 1; }
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease forwards;
+        }
+        
+        /* สไตล์สำหรับการเลือก Google Drive */
+        .destination-options {
+            margin-bottom: 15px;
+        }
+        
+        .radio-group {
+            display: flex;
+            align-items: center;
+        }
+        
+        .radio-group input[type="radio"] {
+            margin-right: 5px;
+        }
+        
+        /* Google Drive branding */
+        .gdrive-logo {
+            display: inline-flex;
+            align-items: center;
+            font-weight: 500;
+            margin-bottom: 10px;
+        }
+        
+        .gdrive-logo::before {
+            content: "";
+            display: inline-block;
+            width: 20px;
+            height: 18px;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 87.3 78'%3E%3Cpath d='m6.6 66.85 3.85 6.65c.8 1.4 1.95 2.5 3.3 3.3l13.75-23.8h-27.5c0 1.55.4 3.1 1.2 4.5z' fill='%230066da'/%3E%3Cpath d='m43.65 25-13.75-23.8c-1.35.8-2.5 1.9-3.3 3.3l-25.4 44a9.06 9.06 0 0 0 -1.2 4.5h27.5z' fill='%2300ac47'/%3E%3Cpath d='m73.55 76.8c1.35-.8 2.5-1.9 3.3-3.3l1.6-2.75 7.65-13.25c.8-1.4 1.2-2.95 1.2-4.5h-27.5l5.1 8.8z' fill='%23ea4335'/%3E%3Cpath d='m43.65 25 13.75-23.8c-1.35-.8-2.9-1.2-4.5-1.2h-18.5c-1.6 0-3.15.45-4.5 1.2z' fill='%2300832d'/%3E%3Cpath d='m59.8 53h-32.3l-13.75 23.8c1.35.8 2.9 1.2 4.5 1.2h50.8c1.6 0 3.15-.45 4.5-1.2z' fill='%232684fc'/%3E%3Cpath d='m73.4 26.5-12.7-22c-.8-1.4-1.95-2.5-3.3-3.3l-13.75 23.8 16.15 28h27.45c0-1.55-.4-3.1-1.2-4.5z' fill='%23ffba00'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-size: contain;
+            margin-right: 5px;
+        }
+        
+        /* Footer styles */
+        .footer {
+            padding: 15px 20px;
+            text-align: center;
+            background: linear-gradient(to bottom, #f9f9f9, #e5e5e5);
+            border-top: 1px solid #ddd;
+            border-radius: 0 0 10px 10px;
+            font-size: 12px;
+            color: #666;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .footer-left, .footer-right {
+            display: flex;
+            align-items: center;
+        }
+        
+        .footer-center {
+            flex: 1;
+            text-align: center;
+        }
+        
+        .footer-icon {
+            margin-right: 5px;
+            font-size: 16px;
+        }
+        
+        .footer a {
+            color: #0071e3;
+            text-decoration: none;
+            margin: 0 5px;
+        }
+        
+        .footer a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="mac-window">
+        <div class="window-header">
+            <div class="window-buttons">
+                <div class="window-button close"></div>
+                <div class="window-button minimize"></div>
+                <div class="window-button maximize"></div>
+            </div>
+            <div class="window-title">โปรแกรมคัดลอกไฟล์</div>
+        </div>
+        <div class="window-content">
+            <h1 class="app-title">โปรแกรมคัดลอกไฟล์ทั้งโฟลเดอร์</h1>
+            
+            <div class="form-group">
+                <label for="source-url">URL ต้นทาง</label>
+                <div class="input-with-button">
+                    <input type="text" id="source-url" class="input-field" placeholder="https://example.com/files/" />
+                    <button id="scan-button" class="browse-button">สแกนไฟล์</button>
+                </div>
+                <div id="file-list" class="file-list hidden">
+                    <!-- รายการไฟล์จะถูกเพิ่มที่นี่ผ่าน JavaScript -->
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="destination-folder">ปลายทาง</label>
+                <div class="destination-options">
+                    <div class="radio-group" style="margin-bottom: 12px;">
+                        <input type="radio" id="local-folder" name="destination-type" value="local" checked>
+                        <label for="local-folder" style="display: inline; margin-right: 20px;">โฟลเดอร์ท้องถิ่น</label>
+                        
+                        <input type="radio" id="google-drive" name="destination-type" value="gdrive">
+                        <label for="google-drive" style="display: inline;">Google Drive</label>
+                    </div>
+                </div>
+                
+                <div id="local-destination" class="input-with-button">
+                    <input type="text" id="destination-folder" class="input-field" placeholder="/Users/username/Documents/destination" />
+                    <button id="browse-button" class="browse-button">เลือกโฟลเดอร์</button>
+                </div>
+                
+                <div id="gdrive-destination" class="input-with-button" style="display: none;">
+                    <div class="gdrive-logo">Google Drive</div>
+                    <input type="text" id="gdrive-folder" class="input-field" placeholder="URL ของโฟลเดอร์ Google Drive" />
+                    <button id="gdrive-auth-button" class="browse-button">เชื่อมต่อ Drive</button>
+                </div>
+            </div>
+            
+            <div id="status-bar" class="status-bar">
+                <div id="status-text">กำลังคัดลอกไฟล์... (0/0)</div>
+                <div class="progress-bar">
+                    <div id="progress" class="progress"></div>
+                </div>
+                <div id="destination-link" class="destination-link">
+                    <span class="destination-link-icon">🔗</span>
+                    <a href="#" id="destination-link-url" target="_blank">ลิงก์ไปยังปลายทาง</a>
+                </div>
+            </div>
+            
+            <div class="action-buttons">
+                <button id="copy-button" class="copy-button">เริ่มคัดลอกไฟล์</button>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <div class="footer-left">
+                <span class="footer-icon">⚙️</span>
+                <span>เวอร์ชัน 1.0.2</span>
+            </div>
+            <div class="footer-center">
+                <span>© 2025 โปรแกรมคัดลอกไฟล์ | <a href="#">นโยบายความเป็นส่วนตัว</a> | <a href="#">ข้อกำหนดการใช้งาน</a></span>
+            </div>
+            <div class="footer-right">
+                <span class="footer-icon">🔄</span>
+                <span><a href="#">ตรวจสอบอัปเดต</a></span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ข้อมูลจำลองสำหรับการแสดงผล
+        const mockFiles = [
+            { name: 'documents', type: 'folder' },
+            { name: 'images', type: 'folder' },
+            { name: 'report.pdf', type: 'file' },
+            { name: 'presentation.pptx', type: 'file' },
+            { name: 'data.xlsx', type: 'file' },
+            { name: 'screenshot.png', type: 'file' },
+            { name: 'notes.txt', type: 'file' },
+            { name: 'source-code.zip', type: 'file' }
+        ];
+        
+        // Google Drive Mock Data
+        const mockGDriveURLs = [
+            'https://drive.google.com/drive/folders/1aBcDeFgHiJkLmNoPqRsTuVwXyZ',
+            'https://drive.google.com/drive/folders/2bCdEfGhIjKlMnOpQrStUvWxYz',
+            'https://drive.google.com/drive/u/0/folders/3cDeFgHiJkLmNoPqRsTuVwXyZ',
+            'https://drive.google.com/drive/my-drive/work-documents',
+            'https://drive.google.com/drive/shared-with-me/project-files'
+        ];
+        
+        // Elements
+        const scanButton = document.getElementById('scan-button');
+        const fileList = document.getElementById('file-list');
+        const browseButton = document.getElementById('browse-button');
+        const copyButton = document.getElementById('copy-button');
+        const statusBar = document.getElementById('status-bar');
+        const statusText = document.getElementById('status-text');
+        const progress = document.getElementById('progress');
+        const sourceUrl = document.getElementById('source-url');
+        const destinationFolder = document.getElementById('destination-folder');
+        const localDestination = document.getElementById('local-destination');
+        const gdriveDestination = document.getElementById('gdrive-destination');
+        const gdriveFolder = document.getElementById('gdrive-folder');
+        const gdriveAuthButton = document.getElementById('gdrive-auth-button');
+        const destinationTypeRadios = document.getElementsByName('destination-type');
+        
+        // แสดง/ซ่อนปลายทางตามประเภทที่เลือก
+        destinationTypeRadios.forEach(radio => {
+            radio.addEventListener('change', () => {
+                if (radio.value === 'local') {
+                    localDestination.style.display = 'flex';
+                    gdriveDestination.style.display = 'none';
+                } else if (radio.value === 'gdrive') {
+                    localDestination.style.display = 'none';
+                    gdriveDestination.style.display = 'flex';
+                }
+            });
+        });
+        
+        // สแกนไฟล์จาก URL
+        scanButton.addEventListener('click', () => {
+            if (!sourceUrl.value) {
+                alert('กรุณาระบุ URL ต้นทาง');
+                return;
+            }
+            
+            // จำลองการโหลดข้อมูล
+            scanButton.textContent = 'กำลังสแกน...';
+            
+            setTimeout(() => {
+                fileList.innerHTML = '';
+                
+                mockFiles.forEach(file => {
+                    const fileItem = document.createElement('div');
+                    fileItem.className = 'file-item';
+                    
+                    const iconSpan = document.createElement('span');
+                    iconSpan.className = file.type === 'folder' ? 'file-icon folder-icon' : 'file-icon';
+                    iconSpan.textContent = file.type === 'folder' ? '📁' : '📄';
+                    
+                    const nameSpan = document.createElement('span');
+                    nameSpan.textContent = file.name;
+                    
+                    fileItem.appendChild(iconSpan);
+                    fileItem.appendChild(nameSpan);
+                    fileList.appendChild(fileItem);
+                });
+                
+                fileList.classList.remove('hidden');
+                scanButton.textContent = 'สแกนไฟล์';
+            }, 1500);
+        });
+        
+        // เลือกโฟลเดอร์ปลายทาง (Local)
+        browseButton.addEventListener('click', () => {
+            // ในความเป็นจริงจะเป็นการเปิด file dialog ซึ่งทำไม่ได้ใน web แบบธรรมดา
+            // แต่นี่เป็นการจำลองการเลือกโฟลเดอร์
+            setTimeout(() => {
+                destinationFolder.value = '/Users/username/Downloads/copied_files';
+            }, 500);
+        });
+        
+        // เชื่อมต่อกับ Google Drive
+        let gdriveConnected = false;
+        gdriveAuthButton.addEventListener('click', () => {
+            if (!gdriveConnected) {
+                gdriveAuthButton.textContent = 'กำลังเชื่อมต่อ...';
+                
+                // จำลองการเชื่อมต่อกับ Google Drive
+                setTimeout(() => {
+                    gdriveConnected = true;
+                    gdriveAuthButton.textContent = 'เชื่อมต่อแล้ว ✓';
+                    gdriveAuthButton.classList.add('success');
+                    
+                    // แสดงตัวเลือก URL โฟลเดอร์ใน Google Drive
+                    const datalist = document.createElement('datalist');
+                    datalist.id = 'gdrive-folders';
+                    
+                    mockGDriveURLs.forEach(url => {
+                        const option = document.createElement('option');
+                        option.value = url;
+                        datalist.appendChild(option);
+                    });
+                    
+                    document.body.appendChild(datalist);
+                    gdriveFolder.setAttribute('list', 'gdrive-folders');
+                    gdriveFolder.placeholder = 'ใส่ URL ของโฟลเดอร์ Google Drive';
+                }, 2000);
+            }
+        });
+        
+        // เริ่มการคัดลอกไฟล์
+        copyButton.addEventListener('click', () => {
+            if (!sourceUrl.value) {
+                alert('กรุณาระบุ URL ต้นทาง');
+                return;
+            }
+            
+            const destinationType = document.querySelector('input[name="destination-type"]:checked').value;
+            
+            if (destinationType === 'local' && !destinationFolder.value) {
+                alert('กรุณาเลือกโฟลเดอร์ปลายทาง');
+                return;
+            }
+            
+            if (destinationType === 'gdrive') {
+                if (!gdriveConnected) {
+                    alert('กรุณาเชื่อมต่อกับ Google Drive ก่อน');
+                    return;
+                }
+                
+                if (!gdriveFolder.value) {
+                    alert('กรุณาระบุ URL ของโฟลเดอร์ Google Drive');
+                    return;
+                }
+            }
+            
+            // ซ่อนลิงก์ปลายทางเมื่อเริ่มการคัดลอกใหม่
+            document.getElementById('destination-link').style.display = 'none';
+            statusBar.style.display = 'block';
+            copyButton.disabled = true;
+            
+            let copied = 0;
+            const total = mockFiles.length;
+            const destinationText = destinationType === 'gdrive' ? 
+                `Google Drive` : destinationFolder.value;
+            
+            // จำลองการคัดลอกไฟล์ทีละไฟล์
+            const copyInterval = setInterval(() => {
+                copied++;
+                const percentComplete = (copied / total) * 100;
+                const currentFile = mockFiles[copied - 1].name;
+                
+                statusText.textContent = destinationType === 'gdrive' ?
+                    `กำลังอัปโหลดไฟล์ ${currentFile} ไปยัง Google Drive... (${copied}/${total})` :
+                    `กำลังคัดลอกไฟล์ ${currentFile}... (${copied}/${total})`;
+                
+                progress.style.width = `${percentComplete}%`;
+                
+                if (copied >= total) {
+                    clearInterval(copyInterval);
+                    statusText.textContent = destinationType === 'gdrive' ?
+                    `อัปโหลดไฟล์ไปยัง Google Drive เสร็จสมบูรณ์` :
+                    `คัดลอกไฟล์ไปยัง ${destinationFolder.value} เสร็จสมบูรณ์`;
+                    
+                    copyButton.textContent = 'เสร็จสมบูรณ์ ✓';
+                    copyButton.classList.add('success');
+                    
+                    // คืนสถานะปุ่มหลังจาก 3 วินาที
+                    setTimeout(() => {
+                        copyButton.disabled = false;
+                        copyButton.textContent = 'เริ่มคัดลอกไฟล์';
+                        copyButton.classList.remove('success');
+                    }, 3000);
+                }
+            }, 500);
+        });
+        
+        // เพิ่มเอฟเฟคให้กับปุ่มต่างๆ
+        document.querySelectorAll('.window-button').forEach(button => {
+            button.addEventListener('click', () => {
+                if (button.classList.contains('close')) {
+                    alert('ฟังก์ชันนี้จะปิดหน้าต่างในแอพพลิเคชันจริง');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
